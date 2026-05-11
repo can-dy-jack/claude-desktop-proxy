@@ -18,10 +18,11 @@ import {
   PauseCircleOutlined,
   PlayCircleOutlined,
   PlusOutlined,
+  ClearOutlined,
   ReloadOutlined,
   SaveOutlined
 } from "@ant-design/icons";
-import type { AppConfig, Profile, RuntimeStatus } from "./types";
+import type { AppConfig, LogEntry, Profile, RuntimeStatus } from "./types";
 
 const emptyProfile = (): Profile => ({
   id: "",
@@ -29,7 +30,7 @@ const emptyProfile = (): Profile => ({
   provider_base_url: "",
   api_key: "",
   gateway_token: "",
-  model_mappings: [{ claude_id: "claude-sonnet-4-6", upstream_id: "" }]
+  model_mappings: [{ claude_id: "sonnet-4-6", upstream_id: "" }]
 });
 
 export default function App() {
@@ -38,6 +39,7 @@ export default function App() {
   const [status, setStatus] = useState<RuntimeStatus | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Profile>(emptyProfile());
+  const [logs, setLogs] = useState<LogEntry[]>([]);
   const [proxyPort, setProxyPort] = useState<number>(15800);
   const [autoStart, setAutoStart] = useState<boolean>(true);
   const profiles = config?.profiles ?? [];
@@ -48,16 +50,28 @@ export default function App() {
   );
 
   async function load() {
-    const [cfg, stat] = await Promise.all([
+    const [cfg, stat, logItems] = await Promise.all([
       invoke<AppConfig>("get_config"),
-      invoke<RuntimeStatus>("get_runtime_status")
+      invoke<RuntimeStatus>("get_runtime_status"),
+      invoke<LogEntry[]>("get_logs", { limit: 200 })
     ]);
     setConfig(cfg);
     setStatus(stat);
+    setLogs(logItems);
     setProxyPort(cfg.proxy_port);
     setAutoStart(cfg.auto_start);
     const firstId = cfg.active_profile_id ?? cfg.profiles[0]?.id ?? null;
     setSelectedId(firstId);
+  }
+
+  async function refreshLogs() {
+    const items = await invoke<LogEntry[]>("get_logs", { limit: 200 });
+    setLogs(items);
+  }
+
+  async function clearLogs() {
+    await invoke("clear_logs");
+    await refreshLogs();
   }
 
   useEffect(() => {
@@ -87,11 +101,11 @@ export default function App() {
     if (!editing.id) return;
     try {
       await invoke("set_active_profile", { profileId: editing.id });
-      await invoke("apply_to_claude_desktop");
       await load();
-      message.success("已切换并写入 Claude Desktop");
+      message.success("已切换当前配置（请在 Claude Desktop 手动配置网关）");
     } catch (error) {
       message.error(`生效失败: ${String(error)}`);
+      await refreshLogs();
     }
   }
 
@@ -133,7 +147,7 @@ export default function App() {
 
   function updateMapping(
     index: number,
-    field: "claude_id" | "upstream_id",
+    field: "claude_id",
     value: string
   ) {
     setEditing((prev) => ({
@@ -159,7 +173,7 @@ export default function App() {
       ...prev,
       model_mappings: [
         ...prev.model_mappings,
-        { claude_id: "claude-haiku-3-5", upstream_id: "" }
+        { claude_id: "haiku-3-5", upstream_id: "" }
       ]
     }));
   }
@@ -254,19 +268,14 @@ export default function App() {
               />
             </Form.Item>
 
-            <Form.Item label="模型映射" style={{ marginBottom: 10 }}>
+            <Form.Item label="模型列表（无需 claude- 前缀）" style={{ marginBottom: 10 }}>
               <Space direction="vertical" style={{ width: "100%" }} size={8}>
                 {editing.model_mappings.map((mapping, index) => (
                   <Space key={`${index}-${mapping.claude_id}`} style={{ display: "flex" }}>
                     <Input
                       value={mapping.claude_id}
                       onChange={(e) => updateMapping(index, "claude_id", e.target.value)}
-                      placeholder="Claude 模型 ID"
-                    />
-                    <Input
-                      value={mapping.upstream_id}
-                      onChange={(e) => updateMapping(index, "upstream_id", e.target.value)}
-                      placeholder="上游模型 ID"
+                      placeholder="例如：sonnet-4-6（或 claude-sonnet-4-6）"
                     />
                     <Button size="medium" danger icon={<DeleteOutlined />} onClick={() => removeMapping(index)}>
                       删除
@@ -292,6 +301,9 @@ export default function App() {
         </Card>
 
         <Card size="medium" title="运行" style={{ marginBottom: 8 }}>
+          <div style={{ marginBottom: 8, fontSize: 12, color: "#64748b" }}>
+            Claude Desktop 请手动配置：Gateway Base URL = http://127.0.0.1:{proxyPort}，模型列表填写 claude-*。
+          </div>
           <Space align="center" wrap size={8}>
             <span>状态:</span>
             <Tag color={status?.running ? "success" : "default"}>
@@ -333,6 +345,40 @@ export default function App() {
             </Space>
             <Button size="medium" onClick={() => void saveRuntimeSettings()}>保存运行设置</Button>
           </Space>
+        </Card>
+
+        <Card
+          size="medium"
+          title="调试日志"
+          extra={
+            <Space size={8}>
+              <Button size="small" icon={<ReloadOutlined />} onClick={() => void refreshLogs()}>
+                刷新
+              </Button>
+              <Button size="small" icon={<ClearOutlined />} onClick={() => void clearLogs()}>
+                清空
+              </Button>
+            </Space>
+          }
+        >
+          <div className="log-panel">
+            {logs.length === 0 ? (
+              <div className="log-empty">暂无日志，先启动代理并发起一次请求。</div>
+            ) : (
+              logs.map((entry, index) => (
+                <div className="log-line" key={`${entry.ts_ms}-${index}`}>
+                  <span className="log-time">{new Date(entry.ts_ms).toLocaleTimeString()}</span>
+                  <Tag
+                    color={entry.level === "error" ? "error" : entry.level === "warn" ? "warning" : "default"}
+                  >
+                    {entry.level.toUpperCase()}
+                  </Tag>
+                  <span className="log-source">[{entry.source}]</span>
+                  <span>{entry.message}</span>
+                </div>
+              ))
+            )}
+          </div>
         </Card>
       </Layout.Content>
     </Layout>

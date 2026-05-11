@@ -1,11 +1,12 @@
 mod commands;
 mod config;
+mod logs;
 mod proxy;
 
 use std::sync::Arc;
 
-use config::claude_desktop;
 use config::store::{AppConfig, ConfigStore};
+use logs::AppLogger;
 use proxy::server::ProxyServer;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
@@ -20,6 +21,7 @@ const PROFILE_MENU_PREFIX: &str = "profile::";
 pub struct AppState {
     pub store: Arc<ConfigStore>,
     pub proxy: Arc<ProxyServer>,
+    pub logger: Arc<AppLogger>,
 }
 
 fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
@@ -106,6 +108,7 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
     let state = app.state::<AppState>();
     let store = state.store.clone();
     let proxy = state.proxy.clone();
+    let logger = state.logger.clone();
     let app_handle = app.clone();
 
     if menu_id == MENU_TOGGLE_PROXY {
@@ -113,8 +116,14 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
             let (running, _) = proxy.status().await;
             if running {
                 proxy.stop().await;
+                logger.push("info", "proxy", "stopped proxy from tray menu");
             } else if let Ok(config) = store.load() {
                 let _ = proxy.start(config.proxy_port).await;
+                logger.push(
+                    "info",
+                    "proxy",
+                    format!("started proxy from tray menu on port {}", config.proxy_port),
+                );
             }
             let _ = refresh_tray_menu(&app_handle);
         });
@@ -126,11 +135,7 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
         tauri::async_runtime::spawn(async move {
             let _ = store.set_active_profile(&profile_id);
             if let Ok(config) = store.load() {
-                if let Some(active_id) = config.active_profile_id.as_deref() {
-                    if let Some(profile) = config.profiles.iter().find(|item| item.id == active_id) {
-                        let _ = claude_desktop::apply_profile(profile, config.proxy_port);
-                    }
-                }
+                logger.push("info", "profile", "switched active profile from tray");
 
                 let (running, _) = proxy.status().await;
                 if running {
@@ -145,20 +150,14 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
 
 fn main() {
     let store = Arc::new(ConfigStore::new());
-    let app_config = store.load().unwrap_or_default();
-    let proxy = Arc::new(ProxyServer::new(store.clone()));
+    let logger = Arc::new(AppLogger::new(800));
+    let proxy = Arc::new(ProxyServer::new(store.clone(), logger.clone()));
 
-    if let Some(active_id) = app_config.active_profile_id.as_deref() {
-        if let Some(profile) = app_config
-            .profiles
-            .iter()
-            .find(|item| item.id == active_id)
-        {
-            let _ = claude_desktop::apply_profile(profile, app_config.proxy_port);
-        }
-    }
-
-    let state = AppState { store, proxy };
+    let state = AppState {
+        store,
+        proxy,
+        logger,
+    };
 
     tauri::Builder::default()
         .manage(state)
@@ -169,9 +168,10 @@ fn main() {
             commands::set_active_profile,
             commands::update_runtime_settings,
             commands::get_runtime_status,
+            commands::get_logs,
+            commands::clear_logs,
             commands::start_proxy,
-            commands::stop_proxy,
-            commands::apply_to_claude_desktop
+            commands::stop_proxy
         ])
         .setup(|app| {
             let app_handle = app.handle().clone();

@@ -58,6 +58,40 @@ body {
   padding: 10px;
 }
 
+.log-panel {
+  max-height: 220px;
+  overflow: auto;
+  border: 1px solid #e6ebf5;
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 8px;
+}
+
+.log-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 3px 0;
+  word-break: break-all;
+}
+
+.log-time {
+  color: #6b7280;
+  min-width: 72px;
+}
+
+.log-source {
+  color: #334155;
+  font-weight: 600;
+}
+
+.log-empty {
+  color: #64748b;
+  font-size: 12px;
+}
+
 @media (max-width: 960px) {
   .app-shell {
     display: block;

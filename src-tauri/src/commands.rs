@@ -2,8 +2,8 @@ use serde::Serialize;
 use tauri::AppHandle;
 use tauri::State;
 
-use crate::config::claude_desktop;
 use crate::config::store::{AppConfig, Profile};
+use crate::logs::LogEntry;
 use crate::AppState;
 
 #[derive(Serialize)]
@@ -48,10 +48,17 @@ pub async fn set_active_profile(
 ) -> Result<(), String> {
     state.store.set_active_profile(&profile_id)?;
     let config = state.store.load()?;
+    state
+        .logger
+        .push("info", "profile", format!("set active profile to {}", profile_id));
+
     let (running, _) = state.proxy.status().await;
     if running {
         state.proxy.stop().await;
         state.proxy.start(config.proxy_port.max(1)).await?;
+        state
+            .logger
+            .push("info", "proxy", "restarted proxy after active profile change");
     }
     let _ = crate::refresh_tray_menu(&app);
     Ok(())
@@ -80,6 +87,11 @@ pub async fn update_runtime_settings(
 pub async fn start_proxy(state: State<'_, AppState>, app: AppHandle) -> Result<(), String> {
     let config = state.store.load()?;
     state.proxy.start(config.proxy_port).await?;
+    state.logger.push(
+        "info",
+        "proxy",
+        format!("started proxy on port {}", config.proxy_port),
+    );
     let _ = crate::refresh_tray_menu(&app);
     Ok(())
 }
@@ -87,6 +99,7 @@ pub async fn start_proxy(state: State<'_, AppState>, app: AppHandle) -> Result<(
 #[tauri::command]
 pub async fn stop_proxy(state: State<'_, AppState>, app: AppHandle) -> Result<(), String> {
     state.proxy.stop().await;
+    state.logger.push("info", "proxy", "stopped proxy");
     let _ = crate::refresh_tray_menu(&app);
     Ok(())
 }
@@ -103,15 +116,11 @@ pub async fn get_runtime_status(state: State<'_, AppState>) -> Result<RuntimeSta
 }
 
 #[tauri::command]
-pub fn apply_to_claude_desktop(state: State<'_, AppState>) -> Result<(), String> {
-    let config = state.store.load()?;
-    let active_id = config
-        .active_profile_id
-        .ok_or_else(|| "no active profile".to_string())?;
-    let profile = config
-        .profiles
-        .iter()
-        .find(|item| item.id == active_id)
-        .ok_or_else(|| "active profile not found".to_string())?;
-    claude_desktop::apply_profile(profile, config.proxy_port)
+pub fn get_logs(state: State<'_, AppState>, limit: Option<usize>) -> Vec<LogEntry> {
+    state.logger.list(limit.unwrap_or(200))
+}
+
+#[tauri::command]
+pub fn clear_logs(state: State<'_, AppState>) {
+    state.logger.clear();
 }

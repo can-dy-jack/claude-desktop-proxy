@@ -6,8 +6,15 @@ use axum::Router;
 use tokio::sync::{oneshot, Mutex};
 
 use crate::config::store::ConfigStore;
+use crate::logs::AppLogger;
 
 use super::handlers;
+
+#[derive(Clone)]
+pub struct ProxyContext {
+    pub store: Arc<ConfigStore>,
+    pub logger: Arc<AppLogger>,
+}
 
 #[derive(Default)]
 struct Runtime {
@@ -18,14 +25,14 @@ struct Runtime {
 
 #[derive(Clone)]
 pub struct ProxyServer {
-    store: Arc<ConfigStore>,
+    context: ProxyContext,
     runtime: Arc<Mutex<Runtime>>,
 }
 
 impl ProxyServer {
-    pub fn new(store: Arc<ConfigStore>) -> Self {
+    pub fn new(store: Arc<ConfigStore>, logger: Arc<AppLogger>) -> Self {
         Self {
-            store,
+            context: ProxyContext { store, logger },
             runtime: Arc::new(Mutex::new(Runtime::default())),
         }
     }
@@ -39,7 +46,7 @@ impl ProxyServer {
         let app = Router::new()
             .route("/v1/models", get(handlers::list_models))
             .route("/v1/messages", post(handlers::forward_messages))
-            .with_state(self.store.clone());
+            .with_state(self.context.clone());
 
         let (tx, rx) = oneshot::channel::<()>();
         let addr = SocketAddr::from(([127, 0, 0, 1], port));

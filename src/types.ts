@@ -26,3 +26,10 @@ export type RuntimeStatus = {
   active_profile_id?: string;
   proxy_port: number;
 };
+
+export type LogEntry = {
+  ts_ms: number;
+  level: string;
+  source: string;
+  message: string;
+};

@@ -8,6 +8,7 @@ use uuid::Uuid;
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModelMapping {
     pub claude_id: String,
+    #[serde(default)]
     pub upstream_id: String,
     pub display_name: Option<String>,
     pub supports_1m: Option<bool>,
@@ -83,9 +84,9 @@ impl ConfigStore {
             profile.gateway_token = format!("cdp-{}", Uuid::new_v4().simple());
         }
 
-        profile.model_mappings.retain(|mapping| {
-            !mapping.claude_id.trim().is_empty() && !mapping.upstream_id.trim().is_empty()
-        });
+        profile
+            .model_mappings
+            .retain(|mapping| !mapping.claude_id.trim().is_empty());
 
         if profile.model_mappings.is_empty() {
             profile.model_mappings.push(ModelMapping {
