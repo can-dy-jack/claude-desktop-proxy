@@ -11,8 +11,7 @@ import {
   List,
   Space,
   Switch,
-  Tag,
-  Typography
+  Tag
 } from "antd";
 import {
   DeleteOutlined,
@@ -177,16 +176,14 @@ export default function App() {
 
   return (
     <Layout className="app-shell">
-      <Layout.Sider className="app-sider" width={280} theme="light">
+      <Layout.Sider className="app-sider" width={230} theme="light">
         <div className="sider-header">
-          <Typography.Title level={4} style={{ margin: 0 }}>
-            Claude Proxy
-          </Typography.Title>
-          <Typography.Text type="secondary">模型组管理</Typography.Text>
+          <div className="sider-title">配置组</div>
         </div>
 
-        <Space style={{ width: "100%", marginBottom: 12 }}>
+        <Space style={{ width: "100%", marginBottom: 8 }}>
           <Button
+            size="medium"
             icon={<PlusOutlined />}
             onClick={() => {
               setSelectedId(null);
@@ -195,7 +192,7 @@ export default function App() {
           >
             新建
           </Button>
-          <Button icon={<ReloadOutlined />} onClick={() => void load()}>
+          <Button size="medium" icon={<ReloadOutlined />} onClick={() => void load()}>
             刷新
           </Button>
         </Space>
@@ -211,8 +208,8 @@ export default function App() {
                 className={active ? "profile-item active" : "profile-item"}
                 onClick={() => setSelectedId(item.id)}
               >
-                <Space direction="vertical" size={2}>
-                  <Typography.Text strong>{item.name || "未命名配置"}</Typography.Text>
+                <Space direction="vertical" size={0}>
+                  <strong>{item.name || "未命名配置"}</strong>
                   {config?.active_profile_id === item.id ? <Tag color="green">当前生效</Tag> : null}
                 </Space>
               </List.Item>
@@ -222,17 +219,8 @@ export default function App() {
       </Layout.Sider>
 
       <Layout.Content className="app-content">
-        <Card className="hero-card" bordered={false}>
-          <Typography.Title level={3} style={{ margin: 0 }}>
-            Claude Desktop Proxy
-          </Typography.Title>
-          <Typography.Paragraph style={{ marginBottom: 0 }}>
-            一处管理多个配置组，一键切换并将设置写入 Claude Desktop。
-          </Typography.Paragraph>
-        </Card>
-
-        <Card title="配置详情" style={{ marginTop: 16 }}>
-          <Form layout="vertical">
+        <Card size="medium" title="配置" style={{ marginBottom: 10 }}>
+          <Form layout="vertical" size="medium">
             <Form.Item label="配置名称">
               <Input
                 value={editing.name}
@@ -256,7 +244,7 @@ export default function App() {
                 placeholder="sk-..."
               />
             </Form.Item>
-            <Form.Item label="Gateway Token">
+            <Form.Item label="Gateway Token" style={{ marginBottom: 10 }}>
               <Input
                 value={editing.gateway_token}
                 onChange={(e) =>
@@ -266,8 +254,8 @@ export default function App() {
               />
             </Form.Item>
 
-            <Form.Item label="模型映射">
-              <Space direction="vertical" style={{ width: "100%" }} size={10}>
+            <Form.Item label="模型映射" style={{ marginBottom: 10 }}>
+              <Space direction="vertical" style={{ width: "100%" }} size={8}>
                 {editing.model_mappings.map((mapping, index) => (
                   <Space key={`${index}-${mapping.claude_id}`} style={{ display: "flex" }}>
                     <Input
@@ -280,37 +268,38 @@ export default function App() {
                       onChange={(e) => updateMapping(index, "upstream_id", e.target.value)}
                       placeholder="上游模型 ID"
                     />
-                    <Button danger icon={<DeleteOutlined />} onClick={() => removeMapping(index)}>
+                    <Button size="medium" danger icon={<DeleteOutlined />} onClick={() => removeMapping(index)}>
                       删除
                     </Button>
                   </Space>
                 ))}
-                <Button icon={<PlusOutlined />} onClick={addMapping}>
+                <Button size="medium" icon={<PlusOutlined />} onClick={addMapping}>
                   新增映射
                 </Button>
               </Space>
             </Form.Item>
           </Form>
 
-          <Space wrap>
-            <Button type="primary" icon={<SaveOutlined />} onClick={() => void saveProfile()}>
+          <Space wrap size={8}>
+            <Button size="medium" type="primary" icon={<SaveOutlined />} onClick={() => void saveProfile()}>
               保存配置
             </Button>
-            <Button onClick={() => void activateProfile()}>设为生效并写入 Claude</Button>
-            <Button danger onClick={() => void deleteProfile()}>
+            <Button size="medium" onClick={() => void activateProfile()}>设为生效</Button>
+            <Button size="medium" danger onClick={() => void deleteProfile()}>
               删除配置
             </Button>
           </Space>
         </Card>
 
-        <Card title="代理状态" style={{ marginTop: 16 }}>
-          <Space align="center" wrap>
-            <Typography.Text>状态:</Typography.Text>
+        <Card size="medium" title="运行" style={{ marginBottom: 8 }}>
+          <Space align="center" wrap size={8}>
+            <span>状态:</span>
             <Tag color={status?.running ? "success" : "default"}>
               {status?.running ? "运行中" : "已停止"}
             </Tag>
-            <Typography.Text>端口: {status?.proxy_port ?? "-"}</Typography.Text>
+            <span>端口: {status?.proxy_port ?? "-"}</span>
             <Button
+              size="medium"
               icon={<PlayCircleOutlined />}
               onClick={() => void startProxy()}
               disabled={status?.running}
@@ -318,6 +307,7 @@ export default function App() {
               启动代理
             </Button>
             <Button
+              size="medium"
               icon={<PauseCircleOutlined />}
               onClick={() => void stopProxy()}
               disabled={!status?.running}
@@ -325,13 +315,12 @@ export default function App() {
               停止代理
             </Button>
           </Space>
-        </Card>
 
-        <Card title="运行设置" style={{ marginTop: 16, marginBottom: 12 }}>
-          <Space direction="vertical" size={14} style={{ width: "100%" }}>
+          <Space direction="vertical" size={10} style={{ width: "100%", marginTop: 10 }}>
             <Space>
-              <Typography.Text>代理端口</Typography.Text>
+              <span>代理端口</span>
               <InputNumber
+                size="medium"
                 min={1}
                 max={65535}
                 value={proxyPort}
@@ -339,10 +328,10 @@ export default function App() {
               />
             </Space>
             <Space>
-              <Switch checked={autoStart} onChange={setAutoStart} />
-              <Typography.Text>应用启动时自动启动代理</Typography.Text>
+              <Switch size="medium" checked={autoStart} onChange={setAutoStart} />
+              <span>启动时自动启动代理</span>
             </Space>
-            <Button onClick={() => void saveRuntimeSettings()}>保存运行设置</Button>
+            <Button size="medium" onClick={() => void saveRuntimeSettings()}>保存运行设置</Button>
           </Space>
         </Card>
       </Layout.Content>

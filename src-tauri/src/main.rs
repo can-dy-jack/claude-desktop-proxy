@@ -77,16 +77,19 @@ fn build_tray_menu(app: &AppHandle<Wry>, config: &AppConfig, running: bool) -> R
 pub(crate) fn refresh_tray_menu(app: &AppHandle<Wry>) -> Result<(), String> {
     let state = app.state::<AppState>();
     let config = state.store.load()?;
-    let running = tauri::async_runtime::block_on(async {
-        let (running, _) = state.proxy.status().await;
-        running
+    let app_handle = app.clone();
+    let proxy = state.proxy.clone();
+
+    tauri::async_runtime::spawn(async move {
+        let (running, _) = proxy.status().await;
+        if let Ok(menu) = build_tray_menu(&app_handle, &config, running) {
+            if let Some(tray) = app_handle.tray_by_id(TRAY_ID) {
+                let _ = tray.set_menu(Some(menu));
+            }
+        }
     });
 
-    let menu = build_tray_menu(app, &config, running).map_err(|e| e.to_string())?;
-    let tray = app
-        .tray_by_id(TRAY_ID)
-        .ok_or_else(|| "tray not found".to_string())?;
-    tray.set_menu(Some(menu)).map_err(|e| e.to_string())
+    Ok(())
 }
 
 fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
@@ -140,8 +143,7 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
     }
 }
 
-#[tokio::main]
-async fn main() {
+fn main() {
     let store = Arc::new(ConfigStore::new());
     let app_config = store.load().unwrap_or_default();
     let proxy = Arc::new(ProxyServer::new(store.clone()));
@@ -154,10 +156,6 @@ async fn main() {
         {
             let _ = claude_desktop::apply_profile(profile, app_config.proxy_port);
         }
-    }
-
-    if app_config.auto_start && app_config.active_profile_id.is_some() {
-        let _ = proxy.start(app_config.proxy_port).await;
     }
 
     let state = AppState { store, proxy };
@@ -182,11 +180,7 @@ async fn main() {
                 let state = app.state::<AppState>();
                 state.store.load().unwrap_or_default()
             };
-            let running = {
-                let state = app.state::<AppState>();
-                let (running, _) = tauri::async_runtime::block_on(async { state.proxy.status().await });
-                running
-            };
+            let running = false;
             let menu = build_tray_menu(&app_handle, &config, running)?;
             let mut tray_builder = TrayIconBuilder::with_id(TRAY_ID)
                 .menu(&menu)
@@ -220,6 +214,20 @@ async fn main() {
                 }
             });
             let _ = main_window.hide();
+
+            if config.auto_start && config.active_profile_id.is_some() {
+                let app_handle = app_handle.clone();
+                let state = app.state::<AppState>();
+                let proxy = state.proxy.clone();
+                let port = config.proxy_port;
+                tauri::async_runtime::spawn(async move {
+                    let _ = proxy.start(port).await;
+                    let _ = refresh_tray_menu(&app_handle);
+                });
+            } else {
+                let _ = refresh_tray_menu(&app_handle);
+            }
+
             Ok(())
         })
         .run(tauri::generate_context!())

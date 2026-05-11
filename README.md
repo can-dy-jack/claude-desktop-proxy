@@ -15,7 +15,57 @@ Claude Desktop 的本地代理客户端（Tauri v2 + React），用于将 Claude
 npm install
 ```
 
-## 本地运行（开发模式）
+## 软件使用
+
+### 1) 启动应用
+
+开发环境启动：
+
+```bash
+npm run tauri:dev
+```
+
+如果你使用已打包版本，双击打开应用即可。
+
+### 2) 新建并启用配置组
+
+打开主窗口后：
+
+- 新增配置组（填写 Provider Base URL、API Key）
+- 配置模型映射（Claude 模型 ID -> 上游模型 ID）
+- 将目标配置组设为 active
+
+### 3) 启动代理
+
+- 在主界面点击启动代理
+- 或在系统托盘菜单点击“启动代理”
+
+默认监听本地端口（可在运行参数里修改）。代理启动后会转发：
+
+- `GET /v1/models`
+- `POST /v1/messages`
+
+### 4) 切换配置组
+
+可在两处切换：
+
+- 主界面切换 active 配置组
+- 系统托盘“切换配置组”子菜单一键切换
+
+如果代理正在运行，切换 active 配置后会自动重启代理并应用新配置。
+
+### 5) 应用到 Claude Desktop
+
+在主界面执行“应用到 Claude Desktop”后，会把当前 active 配置写入 Claude Desktop 的 3P 配置。
+
+### 6) 菜单栏常驻
+
+- 关闭主窗口不会退出程序，只会隐藏到托盘
+- 托盘可进行：打开设置、启动/停止代理、切换配置组、退出程序
+
+## 参与开发
+
+### 本地运行（开发模式）
 
 推荐直接使用：
 
@@ -33,7 +83,7 @@ npm run tauri:dev
 npm run tauri -- dev
 ```
 
-## 前端单独调试
+### 前端单独调试
 
 只跑前端页面：
 
@@ -47,7 +97,7 @@ npm run dev
 npm run build
 ```
 
-## 打包发布
+### 打包发布
 
 执行：
 
@@ -71,7 +121,7 @@ npm run tauri -- build
 - `macos/`
 - `app/`
 
-## 常见问题
+### 常见问题
 
 ### 1) `npm run tauri` 直接退出（exit code 2）
 
