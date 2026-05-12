@@ -25,7 +25,11 @@ const emptyProfile = (): Profile => ({
   provider_base_url: "",
   api_key: "",
   gateway_token: "",
-  model_mappings: [{ claude_id: "sonnet-4-6", upstream_id: "" }],
+  model_mappings: [
+    { claude_id: "claude-sonnet-4-6", upstream_id: "claude-sonnet-4-6" },
+    { claude_id: "claude-opus-4-1", upstream_id: "claude-opus-4-1" },
+    { claude_id: "claude-haiku-3-5", upstream_id: "claude-haiku-3-5" },
+  ],
 });
 
 const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [

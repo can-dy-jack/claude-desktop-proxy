@@ -139,16 +139,6 @@ fn ensure_claude_prefix(input: &str) -> String {
     }
 }
 
-fn remove_claude_prefix(input: &str) -> String {
-    let raw = input.trim();
-    let without_vendor = raw.strip_prefix("anthropic/").unwrap_or(raw);
-    if let Some(stripped) = without_vendor.strip_prefix("claude-") {
-        stripped.to_string()
-    } else {
-        without_vendor.to_string()
-    }
-}
-
 pub async fn list_models(
     State(ctx): State<ProxyContext>,
     headers: HeaderMap,
@@ -226,20 +216,20 @@ pub async fn forward_messages(
         .and_then(Value::as_bool)
         .unwrap_or(false);
 
-    let mapped_upstream = profile
+    let mapped = profile
         .model_mappings
         .iter()
         .find(|m| ensure_claude_prefix(&m.claude_id) == ensure_claude_prefix(&requested_model))
-        .and_then(|m| {
-            let v = m.upstream_id.trim();
-            if v.is_empty() {
-                None
-            } else {
-                Some(v.to_string())
-            }
-        });
+        .ok_or((
+            StatusCode::BAD_REQUEST,
+            format!("model '{}' is not configured in model_mappings", requested_model),
+        ))?;
 
-    let upstream_model = mapped_upstream.unwrap_or_else(|| remove_claude_prefix(&requested_model));
+    let upstream_model = if mapped.upstream_id.trim().is_empty() {
+        mapped.claude_id.trim().to_string()
+    } else {
+        mapped.upstream_id.trim().to_string()
+    };
     body["model"] = json!(upstream_model.clone());
 
     ctx.logger.push(

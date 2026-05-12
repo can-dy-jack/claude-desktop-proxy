@@ -12,11 +12,20 @@ export default function ConfigForm({
   onUpdate,
   section = "basic",
 }: ConfigFormProps) {
-  function updateModel(index: number, value: string) {
+  function updateClaudeModel(index: number, value: string) {
     onUpdate({
       ...editing,
       model_mappings: editing.model_mappings.map((mapping, current) =>
-        current === index ? { ...mapping, claude_id: value, upstream_id: "" } : mapping
+        current === index ? { ...mapping, claude_id: value } : mapping
+      ),
+    });
+  }
+
+  function updateUpstreamModel(index: number, value: string) {
+    onUpdate({
+      ...editing,
+      model_mappings: editing.model_mappings.map((mapping, current) =>
+        current === index ? { ...mapping, upstream_id: value } : mapping
       ),
     });
   }
@@ -44,7 +53,7 @@ export default function ConfigForm({
   if (section === "models") {
     return (
       <Section
-        title="模型列表"
+        title="模型映射"
         actions={
           <button className="mac-btn" onClick={addModel} type="button">
             + 新增
@@ -52,17 +61,24 @@ export default function ConfigForm({
         }
       >
         <div className="text-[11.5px] text-neutral-500 mb-2">
-          这里只维护可用模型列表，代理会自动处理 claude- 前缀。
+          为每个 Claude 模型设置上游模型 ID。代理转发时将按映射替换 model 字段。
         </div>
-        <PrefRow label="模型列表" align="start">
+        <PrefRow label="Claude -> Upstream" align="start">
           <div className="space-y-2">
             {editing.model_mappings.map((mapping, index) => (
               <div key={index} className="flex items-center gap-2">
                 <input
-                  className="mac-input max-w-[420px] font-mono"
-                  value={mapping.claude_id || mapping.upstream_id}
-                  onChange={(e) => updateModel(index, e.target.value)}
-                  placeholder="例如：sonnet-4-6"
+                  className="mac-input max-w-[260px] font-mono"
+                  value={mapping.claude_id}
+                  onChange={(e) => updateClaudeModel(index, e.target.value)}
+                  placeholder="claude-sonnet-4-6"
+                />
+                <span className="text-neutral-400">→</span>
+                <input
+                  className="mac-input max-w-[260px] font-mono"
+                  value={mapping.upstream_id}
+                  onChange={(e) => updateUpstreamModel(index, e.target.value)}
+                  placeholder="上游模型 ID"
                 />
                 <button
                   type="button"

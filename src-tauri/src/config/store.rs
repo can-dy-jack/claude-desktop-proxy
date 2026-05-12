@@ -48,6 +48,29 @@ pub struct ConfigStore {
     path: PathBuf,
 }
 
+fn default_model_mappings() -> Vec<ModelMapping> {
+    vec![
+        ModelMapping {
+            claude_id: "claude-sonnet-4-6".to_string(),
+            upstream_id: "claude-sonnet-4-6".to_string(),
+            display_name: None,
+            supports_1m: Some(false),
+        },
+        ModelMapping {
+            claude_id: "claude-opus-4-1".to_string(),
+            upstream_id: "claude-opus-4-1".to_string(),
+            display_name: None,
+            supports_1m: Some(false),
+        },
+        ModelMapping {
+            claude_id: "claude-haiku-3-5".to_string(),
+            upstream_id: "claude-haiku-3-5".to_string(),
+            display_name: None,
+            supports_1m: Some(false),
+        },
+    ]
+}
+
 impl ConfigStore {
     pub fn new() -> Self {
         let base = config_dir()
@@ -88,13 +111,14 @@ impl ConfigStore {
             .model_mappings
             .retain(|mapping| !mapping.claude_id.trim().is_empty());
 
+        for mapping in &mut profile.model_mappings {
+            if mapping.upstream_id.trim().is_empty() {
+                mapping.upstream_id = mapping.claude_id.clone();
+            }
+        }
+
         if profile.model_mappings.is_empty() {
-            profile.model_mappings.push(ModelMapping {
-                claude_id: "claude-sonnet-4-6".to_string(),
-                upstream_id: String::new(),
-                display_name: None,
-                supports_1m: Some(false),
-            });
+            profile.model_mappings = default_model_mappings();
         }
 
         match config.profiles.iter().position(|item| item.id == profile.id) {
