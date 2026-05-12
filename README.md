@@ -1,5 +1,7 @@
 # Claude Desktop Proxy
 
+中文说明: [README.md](./README.md) | English version: [README.en.md](./README.en.md)
+
 Claude Desktop 的本地代理客户端（Tauri v2 + React），用于将 Claude Desktop 请求中转到第三方模型，并支持多配置组切换。
 
 
@@ -61,4 +63,11 @@ npm run tauri:build
 默认产物位置（macOS）：
 
 - `src-tauri/target/release/bundle/`
+
+### 触发流水线
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
 

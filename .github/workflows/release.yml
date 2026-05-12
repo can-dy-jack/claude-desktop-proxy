@@ -1,33 +1,44 @@
+# 工作流名称：用于在 Actions 页面展示
 name: Build and Release
 
+# 触发条件：
+# 1) 推送 tag（匹配 v*，例如 v0.1.0）时自动触发
+# 2) 支持在 GitHub Actions 页面手动触发
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
 
+# 需要写入仓库内容权限，用于创建/更新 Release 并上传构建产物
 permissions:
   contents: write
 
 jobs:
+  # 发布任务：在多平台并行构建 Tauri 应用并上传到同一个 Release
   publish-tauri:
     strategy:
+      # 某个平台失败时，不中断其它平台构建
       fail-fast: false
       matrix:
+        # 构建平台矩阵：macOS / Linux / Windows
         platform: [macos-latest, ubuntu-22.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
 
     steps:
+      # 拉取仓库代码
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 安装 Node.js，并启用 npm 缓存以加速依赖安装
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
+      # 仅 Linux 需要安装 Tauri/WebKit 打包依赖
       - name: Install Linux dependencies
         if: matrix.platform == 'ubuntu-22.04'
         run: |
@@ -38,19 +49,29 @@ jobs:
             librsvg2-dev \
             patchelf
 
+      # 安装 Rust 工具链（Tauri 后端构建需要）
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      # 安装前端依赖
       - name: Install frontend dependencies
         run: npm ci
 
+      # 构建并发布：
+      # tauri-action 会调用 tauri build，并将产物上传到 GitHub Releases
+      # 注意：不需要额外显式执行 npm run tauri:build
       - name: Build and upload release artifacts
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          # 使用当前 tag 名称作为 Release 的 tagName（例如 v0.1.0）
           tagName: ${{ github.ref_name }}
+          # Release 标题
           releaseName: "Claude Desktop Proxy ${{ github.ref_name }}"
+          # Release 描述
           releaseBody: "Automated release for ${{ github.ref_name }}"
+          # 是否草稿发布
           releaseDraft: false
+          # 是否预发布
           prerelease: false
