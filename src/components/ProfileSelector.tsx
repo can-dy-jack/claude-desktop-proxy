@@ -24,9 +24,13 @@ export default function ProfileSelector({
   onSave,
   canMutate,
 }: ProfileSelectorProps) {
+  const selectedProfile = profiles.find((p) => p.id === selectedId) ?? null;
+  const selectedIsActive =
+    !!selectedProfile && selectedProfile.id === activeProfileId;
+
   const options = profiles.map((p) => ({
     value: p.id,
-    label: `${p.name || "未命名配置"}${p.id === activeProfileId ? "  · 生效中" : ""}`,
+    label: p.name || "未命名配置",
   }));
 
   return (
@@ -43,6 +47,11 @@ export default function ProfileSelector({
             />
           ) : (
             <span className="text-[12.5px] text-neutral-500">暂无配置，请新建。</span>
+          )}
+          {selectedIsActive && (
+            <span className="active-tag" aria-label="当前配置已生效">
+              生效中
+            </span>
           )}
           <button className="mac-btn" type="button" onClick={onNewProfile}>
             + 新建

@@ -12,20 +12,16 @@ export default function ConfigForm({
   onUpdate,
   section = "basic",
 }: ConfigFormProps) {
-  function updateMapping(
-    index: number,
-    field: "claude_id" | "upstream_id",
-    value: string
-  ) {
+  function updateModel(index: number, value: string) {
     onUpdate({
       ...editing,
       model_mappings: editing.model_mappings.map((mapping, current) =>
-        current === index ? { ...mapping, [field]: value } : mapping
+        current === index ? { ...mapping, claude_id: value, upstream_id: "" } : mapping
       ),
     });
   }
 
-  function removeMapping(index: number) {
+  function removeModel(index: number) {
     onUpdate({
       ...editing,
       model_mappings:
@@ -35,7 +31,7 @@ export default function ConfigForm({
     });
   }
 
-  function addMapping() {
+  function addModel() {
     onUpdate({
       ...editing,
       model_mappings: [
@@ -48,46 +44,36 @@ export default function ConfigForm({
   if (section === "models") {
     return (
       <Section
-        title="模型映射"
+        title="模型列表"
         actions={
-          <button className="mac-btn" onClick={addMapping} type="button">
+          <button className="mac-btn" onClick={addModel} type="button">
             + 新增
           </button>
         }
       >
+        <div className="text-[11.5px] text-neutral-500 mb-2">
+          这里只维护可用模型列表，代理会自动处理 claude- 前缀。
+        </div>
         <PrefRow label="模型列表" align="start">
           <div className="space-y-2">
             {editing.model_mappings.map((mapping, index) => (
               <div key={index} className="flex items-center gap-2">
                 <input
-                  className="mac-input flex-1 font-mono"
-                  value={mapping.claude_id}
-                  onChange={(e) => updateMapping(index, "claude_id", e.target.value)}
+                  className="mac-input max-w-[420px] font-mono"
+                  value={mapping.claude_id || mapping.upstream_id}
+                  onChange={(e) => updateModel(index, e.target.value)}
                   placeholder="例如：sonnet-4-6"
-                />
-                <span className="text-neutral-400 text-xs">→</span>
-                <input
-                  className="mac-input flex-1 font-mono"
-                  value={mapping.upstream_id}
-                  onChange={(e) =>
-                    updateMapping(index, "upstream_id", e.target.value)
-                  }
-                  placeholder="上游模型 ID"
                 />
                 <button
                   type="button"
                   className="mac-btn mac-btn-danger px-2"
-                  onClick={() => removeMapping(index)}
+                  onClick={() => removeModel(index)}
                   aria-label="删除"
                 >
                   ✕
                 </button>
               </div>
             ))}
-            <div className="text-[11.5px] text-neutral-500 pt-1">
-              Claude Desktop 调用时模型带{" "}
-              <code className="font-mono">claude-</code> 前缀；代理会去除前缀后转发至上游。
-            </div>
           </div>
         </PrefRow>
       </Section>

@@ -35,7 +35,9 @@ body,
   border: 0;
   outline: none;
   cursor: pointer;
+  position: relative;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.14);
+  transition: transform 0.14s ease, filter 0.14s ease;
 }
 
 .titlebar-control.close {
@@ -44,6 +46,63 @@ body,
 
 .titlebar-control.minimize {
   background: #ffbd2e;
+}
+
+.titlebar-control::before,
+.titlebar-control::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 1.4px;
+  background: rgba(40, 40, 40, 0.62);
+  border-radius: 9999px;
+  opacity: 0;
+  transition: opacity 0.14s ease;
+}
+
+.titlebar-control.close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.titlebar-control.close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.titlebar-control.minimize::before {
+  transform: translate(-50%, -50%);
+}
+
+.titlebar-control.minimize::after {
+  display: none;
+}
+
+.titlebar-control:hover {
+  filter: brightness(0.96);
+}
+
+.titlebar-control:hover::before,
+.titlebar-control:hover::after {
+  opacity: 1;
+}
+
+.titlebar-control:active {
+  transform: scale(0.9);
+  filter: brightness(0.9);
+}
+
+.active-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 9999px;
+  border: 1px solid rgba(32, 160, 90, 0.3);
+  background: rgba(32, 160, 90, 0.14);
+  color: #1e7f49;
+  font-size: 11.5px;
+  font-weight: 600;
 }
 
 .titlebar-drag {
