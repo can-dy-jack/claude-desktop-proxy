@@ -126,15 +126,6 @@ fn profile_from_request(ctx: &ProxyContext, headers: &HeaderMap) -> Result<Profi
     Err((StatusCode::UNAUTHORIZED, "invalid token".to_string()))
 }
 
-fn check_token(headers: &HeaderMap, expected_token: &str) -> Result<(), (StatusCode, String)> {
-    if let Some(token) = extract_gateway_token(headers) {
-        if token == expected_token {
-            return Ok(());
-        }
-    }
-    Err((StatusCode::UNAUTHORIZED, "invalid token".to_string()))
-}
-
 fn ensure_claude_prefix(input: &str) -> String {
     let raw = input.trim();
     if raw.is_empty() {

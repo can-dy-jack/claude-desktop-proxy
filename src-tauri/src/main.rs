@@ -25,10 +25,18 @@ pub struct AppState {
 }
 
 fn show_main_window<R: Runtime>(app: &AppHandle<R>) {
+    let _ = app.set_activation_policy(tauri::ActivationPolicy::Regular);
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
         let _ = window.set_focus();
     }
+}
+
+fn hide_main_window<R: Runtime>(app: &AppHandle<R>) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.hide();
+    }
+    let _ = app.set_activation_policy(tauri::ActivationPolicy::Accessory);
 }
 
 fn build_tray_menu(app: &AppHandle<Wry>, config: &AppConfig, running: bool) -> Result<Menu<Wry>, tauri::Error> {
@@ -150,7 +158,7 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
 
 fn main() {
     let store = Arc::new(ConfigStore::new());
-    let logger = Arc::new(AppLogger::new(800));
+    let logger = Arc::new(AppLogger::new(100));
     let proxy = Arc::new(ProxyServer::new(store.clone(), logger.clone()));
 
     let state = AppState {
@@ -206,14 +214,17 @@ fn main() {
             let _ = tray_builder.build(app)?;
 
             let main_window = app.get_webview_window("main").expect("main window");
-            let window_for_events = main_window.clone();
+            if let Some(icon) = app.default_window_icon() {
+                let _ = main_window.set_icon(icon.clone());
+            }
+            let app_for_window = app_handle.clone();
             main_window.on_window_event(move |event| {
                 if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                     api.prevent_close();
-                    let _ = window_for_events.hide();
+                    hide_main_window(app_for_window.app_handle());
                 }
             });
-            let _ = main_window.hide();
+            hide_main_window(app_handle.app_handle());
 
             if config.auto_start && config.active_profile_id.is_some() {
                 let app_handle = app_handle.clone();
