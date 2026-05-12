@@ -9,6 +9,7 @@ const messages: Record<Locale, Record<string, string>> = {
   "zh-CN": {
     "tab.profile": "配置",
     "tab.runtime": "运行",
+    "tab.settings": "设置",
     "tab.logs": "日志",
     "window.close": "关闭窗口",
     "window.minimize": "最小化窗口",
@@ -26,6 +27,8 @@ const messages: Record<Locale, Record<string, string>> = {
     "toast.proxyStopFailed": "停止失败: {error}",
     "toast.runtimeSaved": "运行设置已更新",
     "toast.runtimeSaveFailed": "保存运行设置失败: {error}",
+    "toast.settingsSaved": "设置已保存",
+    "toast.settingsSaveFailed": "保存设置失败: {error}",
 
     "profile.section": "配置组",
     "profile.current": "当前配置",
@@ -82,6 +85,14 @@ const messages: Record<Locale, Record<string, string>> = {
     "runtime.gatewayApiKey": "Gateway API Key",
     "runtime.gatewayApiKeyHelp": "使用当前生效配置的 Gateway Token",
 
+    "settings.title": "设置",
+    "settings.language": "界面语言",
+    "settings.languageOptionZh": "中文",
+    "settings.languageOptionEn": "English",
+    "settings.shortcut": "全局快捷键",
+    "settings.shortcutHint": "预留：用于唤起本设置窗口（暂未实现绑定）。",
+    "settings.save": "保存设置",
+
     "logs.title": "调试日志",
     "logs.refresh": "刷新",
     "logs.clear": "清空",
@@ -92,6 +103,7 @@ const messages: Record<Locale, Record<string, string>> = {
   "en-US": {
     "tab.profile": "Profile",
     "tab.runtime": "Runtime",
+    "tab.settings": "Settings",
     "tab.logs": "Logs",
     "window.close": "Close window",
     "window.minimize": "Minimize window",
@@ -109,6 +121,8 @@ const messages: Record<Locale, Record<string, string>> = {
     "toast.proxyStopFailed": "Failed to stop proxy: {error}",
     "toast.runtimeSaved": "Runtime settings updated",
     "toast.runtimeSaveFailed": "Failed to save runtime settings: {error}",
+    "toast.settingsSaved": "Settings saved",
+    "toast.settingsSaveFailed": "Failed to save settings: {error}",
 
     "profile.section": "Profiles",
     "profile.current": "Current profile",
@@ -164,6 +178,14 @@ const messages: Record<Locale, Record<string, string>> = {
     "runtime.gatewayBaseUrl": "Gateway Base URL",
     "runtime.gatewayApiKey": "Gateway API Key",
     "runtime.gatewayApiKeyHelp": "Use the Gateway Token of the active profile",
+
+    "settings.title": "Settings",
+    "settings.language": "Language",
+    "settings.languageOptionZh": "Chinese",
+    "settings.languageOptionEn": "English",
+    "settings.shortcut": "Global Shortcut",
+    "settings.shortcutHint": "Reserved for opening this window (binding not implemented yet).",
+    "settings.save": "Save Settings",
 
     "logs.title": "Debug Logs",
     "logs.refresh": "Refresh",

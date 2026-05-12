@@ -8,6 +8,7 @@ import {
   DebugLogs,
   ProfileSelector,
   RuntimeSettings,
+  SettingsPanel,
 } from "./components";
 import {
   createTranslator,
@@ -17,7 +18,7 @@ import {
 } from "./i18n";
 import type { AppConfig, LogEntry, Profile, RuntimeStatus } from "./types";
 
-type TabKey = "profile" | "runtime" | "logs";
+type TabKey = "profile" | "runtime" | "settings" | "logs";
 
 interface Toast {
   id: number;
@@ -61,6 +62,15 @@ const TAB_META: { key: TabKey; icon: JSX.Element }[] = [
     ),
   },
   {
+    key: "settings",
+    icon: (
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 .15 1.7 1.7 0 0 0-.99 1.55V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8 19.4a1.7 1.7 0 0 0-1-.15 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-.15-1 1.7 1.7 0 0 0-1.55-.99H2.9a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8a1.7 1.7 0 0 0 .15-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8 4.6a1.7 1.7 0 0 0 1-.15h0a1.7 1.7 0 0 0 .99-1.55V2.9a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1 .15 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8a1.7 1.7 0 0 0 .15 1v0a1.7 1.7 0 0 0 1.55.99h.09a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z" />
+      </svg>
+    ),
+  },
+  {
     key: "logs",
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
@@ -100,7 +110,7 @@ export default function App() {
     }, 2400);
   }, []);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (forceSyncWithActive = false) => {
     const [cfg, stat, logItems] = await Promise.all([
       invoke<AppConfig>("get_config"),
       invoke<RuntimeStatus>("get_runtime_status"),
@@ -122,7 +132,12 @@ export default function App() {
     setLanguage(currentLanguage);
     setProxyPort(cfg.proxy_port);
     setAutoStart(cfg.auto_start);
-    setSelectedId((current) => current ?? cfg.active_profile_id ?? cfg.profiles[0]?.id ?? null);
+    setSelectedId((current) => {
+      if (forceSyncWithActive) {
+        return cfg.active_profile_id ?? cfg.profiles[0]?.id ?? null;
+      }
+      return current ?? cfg.active_profile_id ?? cfg.profiles[0]?.id ?? null;
+    });
   }, []);
 
   async function refreshLogs() {
@@ -143,7 +158,7 @@ export default function App() {
 
   useEffect(() => {
     const unlisten = listen("proxy-state-changed", () => {
-      void load();
+      void load(true);
     });
     return () => {
       void unlisten.then((fn) => fn());
@@ -169,7 +184,7 @@ export default function App() {
     if (!editing.id) return;
     try {
       await invoke("set_active_profile", { profileId: editing.id });
-      await load();
+      await load(true);
       notify("success", t("toast.profileActivated"));
     } catch (error) {
       notify("error", t("toast.profileActivateFailed", { error: String(error) }));
@@ -212,7 +227,6 @@ export default function App() {
 
   async function saveRuntimeSettings() {
     try {
-      await invoke("update_language", { language });
       await invoke("update_runtime_settings", { proxyPort, autoStart });
       await load();
       notify("success", t("toast.runtimeSaved"));
@@ -232,6 +246,16 @@ export default function App() {
   function startWindowDrag(event: MouseEvent<HTMLDivElement>) {
     if (event.button !== 0) return;
     void appWindow.startDragging();
+  }
+
+  async function saveSettings() {
+    try {
+      await invoke("update_language", { language });
+      await load();
+      notify("success", t("toast.settingsSaved"));
+    } catch (error) {
+      notify("error", t("toast.settingsSaveFailed", { error: String(error) }));
+    }
   }
 
   return (
@@ -312,8 +336,15 @@ export default function App() {
                 onStartProxy={() => void startProxy()}
                 onStopProxy={() => void stopProxy()}
                 onSaveSettings={() => void saveRuntimeSettings()}
+                t={t}
+              />
+            )}
+
+            {tab === "settings" && (
+              <SettingsPanel
                 language={language}
                 onLanguageChange={setLanguage}
+                onSaveSettings={() => void saveSettings()}
                 t={t}
               />
             )}

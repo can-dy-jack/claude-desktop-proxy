@@ -1,6 +1,6 @@
 import type { RuntimeStatus } from "../types";
-import type { Locale, Translate } from "../i18n";
-import { PrefRow, Section, Select, ShortcutInput, Slider, Switch } from "./ui";
+import type { Translate } from "../i18n";
+import { PrefRow, Section, Slider, Switch } from "./ui";
 
 interface RuntimeSettingsProps {
   status: RuntimeStatus | null;
@@ -11,8 +11,6 @@ interface RuntimeSettingsProps {
   onStartProxy: () => void;
   onStopProxy: () => void;
   onSaveSettings: () => void;
-  language: Locale;
-  onLanguageChange: (locale: Locale) => void;
   t: Translate;
 }
 
@@ -25,15 +23,9 @@ export default function RuntimeSettings({
   onStartProxy,
   onStopProxy,
   onSaveSettings,
-  language,
-  onLanguageChange,
   t,
 }: RuntimeSettingsProps) {
   const running = !!status?.running;
-  const languageOptions: { value: Locale; label: string }[] = [
-    { value: "zh-CN", label: t("runtime.languageOptionZh") },
-    { value: "en-US", label: t("runtime.languageOptionEn") },
-  ];
 
   return (
     <>
@@ -97,24 +89,6 @@ export default function RuntimeSettings({
             <Switch checked={autoStart} onChange={onAutoStartChange} />
             <span className="text-[13px]">{t("runtime.autoStart")}</span>
           </label>
-        </PrefRow>
-        <PrefRow label={t("runtime.language")}>
-          <Select
-            value={language}
-            options={languageOptions}
-            onChange={onLanguageChange}
-            width={200}
-          />
-        </PrefRow>
-        <PrefRow
-          label={t("runtime.shortcut")}
-          hint={t("runtime.shortcutHint")}
-        >
-          <ShortcutInput
-            modifiers={["⌥ Option", "⇧ Shift"]}
-            keyName="K"
-            placeholder={t("common.notSet")}
-          />
         </PrefRow>
         <PrefRow label="">
           <button
