@@ -1,6 +1,6 @@
 [package]
 name = "claude-desktop-proxy"
-version = "0.1.2"
+version = "0.1.4"
 description = "Menu bar proxy for Claude Desktop"
 authors = ["you"]
 license = "MIT"
