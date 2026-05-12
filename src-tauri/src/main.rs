@@ -10,7 +10,7 @@ use logs::AppLogger;
 use proxy::server::ProxyServer;
 use tauri::menu::{IsMenuItem, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
-use tauri::{AppHandle, Manager, Runtime, Wry};
+use tauri::{AppHandle, Emitter, Manager, Runtime, Wry};
 
 const TRAY_ID: &str = "main-tray";
 const MENU_OPEN_SETTINGS: &str = "open-settings";
@@ -134,6 +134,7 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
                 );
             }
             let _ = refresh_tray_menu(&app_handle);
+            let _ = app_handle.emit("proxy-state-changed", ());
         });
         return;
     }
@@ -152,6 +153,7 @@ fn handle_tray_menu_event(app: &AppHandle<Wry>, menu_id: &str) {
                 }
             }
             let _ = refresh_tray_menu(&app_handle);
+            let _ = app_handle.emit("proxy-state-changed", ());
         });
     }
 }

@@ -10,12 +10,21 @@
     "frontendDist": "../dist"
   },
   "app": {
+    "macOSPrivateApi": true,
     "windows": [
       {
         "title": "Claude Desktop Proxy",
         "width": 800,
         "height": 600,
-        "resizable": true
+        "resizable": true,
+        "transparent": true,
+        "decorations": false,
+        "shadow": true,
+        "windowEffects": {
+          "effects": ["sidebar"],
+          "state": "active",
+          "radius": 18
+        }
       }
     ]
   },

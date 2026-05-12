@@ -1,4 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import type { MouseEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ConfigForm,
@@ -63,6 +66,7 @@ const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [
 ];
 
 export default function App() {
+  const appWindow = getCurrentWindow();
   const [tab, setTab] = useState<TabKey>("profile");
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [status, setStatus] = useState<RuntimeStatus | null>(null);
@@ -114,6 +118,15 @@ export default function App() {
   useEffect(() => {
     void load().catch((error) => notify("error", `加载配置失败: ${String(error)}`));
   }, [load, notify]);
+
+  useEffect(() => {
+    const unlisten = listen("proxy-state-changed", () => {
+      void load();
+    });
+    return () => {
+      void unlisten.then((fn) => fn());
+    };
+  }, [load]);
 
   useEffect(() => {
     if (selected) setEditing(selected);
@@ -185,68 +198,108 @@ export default function App() {
     }
   }
 
+  function closeWindow() {
+    void appWindow.close();
+  }
+
+  function minimizeWindow() {
+    void appWindow.minimize();
+  }
+
+  function startWindowDrag(event: MouseEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+    void appWindow.startDragging();
+  }
+
   return (
-    <div className="h-full w-full overflow-auto thin-scroll py-3 px-4">
-      <div className="mx-auto w-full max-w-[860px]">
-        {/* Icon nav bar */}
-        <nav className="glass-surface px-4 py-2 flex items-center justify-center gap-1 mb-3">
-          {TABS.map((t) => (
-            <button
-              key={t.key}
-              type="button"
-              className={`nav-tab ${tab === t.key ? "active" : ""}`}
-              onClick={() => setTab(t.key)}
-            >
-              <span className="nav-icon">{t.icon}</span>
-              <span>{t.label}</span>
-            </button>
-          ))}
-        </nav>
+    <div className="app-shell h-full w-full flex flex-col">
+      {/* Custom title bar */}
+      <div className="titlebar">
+        <div className="titlebar-controls" aria-label="window controls">
+          <button
+            type="button"
+            className="titlebar-control close"
+            aria-label="关闭窗口"
+            onClick={closeWindow}
+          />
+          <button
+            type="button"
+            className="titlebar-control minimize"
+            aria-label="最小化窗口"
+            onClick={minimizeWindow}
+          />
+        </div>
 
-        {/* Content */}
-        <main>
-          {tab === "profile" && (
-            <>
-              <ProfileSelector
-                profiles={profiles}
-                selectedId={selectedId}
-                activeProfileId={config?.active_profile_id}
-                onSelectProfile={setSelectedId}
-                onNewProfile={() => {
-                  setSelectedId(null);
-                  setEditing(emptyProfile());
-                }}
-                onSave={() => void saveProfile()}
-                onActivate={() => void activateProfile()}
-                onDelete={() => void deleteProfile()}
-                canMutate={!!editing.id}
+        <div data-tauri-drag-region className="titlebar-drag" onMouseDown={startWindowDrag}>
+          <span className="titlebar-title">Claude Desktop Proxy</span>
+        </div>
+
+        <div className="titlebar-spacer" aria-hidden="true" />
+      </div>
+
+      {/* Scrollable content */}
+      <div className="flex-1 overflow-auto thin-scroll px-4 pb-3">
+        <div className="mx-auto w-full max-w-[860px]">
+          {/* Icon nav bar */}
+          <nav className="px-4 py-2 flex items-center justify-center gap-1 mb-3">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                className={`nav-tab ${tab === t.key ? "active" : ""}`}
+                onClick={() => setTab(t.key)}
+              >
+                <span className="nav-icon">{t.icon}</span>
+                <span>{t.label}</span>
+              </button>
+            ))}
+          </nav>
+
+          {/* Content */}
+          <main>
+            {tab === "profile" && (
+              <>
+                <ProfileSelector
+                  profiles={profiles}
+                  selectedId={selectedId}
+                  activeProfileId={config?.active_profile_id}
+                  onSelectProfile={setSelectedId}
+                  onNewProfile={() => {
+                    setSelectedId(null);
+                    setEditing(emptyProfile());
+                  }}
+                  onSave={() => void saveProfile()}
+                  onActivate={() => void activateProfile()}
+                  onDelete={() => void deleteProfile()}
+                  canMutate={!!editing.id}
+                />
+                <ConfigForm editing={editing} onUpdate={setEditing} section="basic" />
+                <ConfigForm editing={editing} onUpdate={setEditing} section="models" />
+              </>
+            )}
+
+            {tab === "runtime" && (
+              <RuntimeSettings
+                status={status}
+                proxyPort={proxyPort}
+                autoStart={autoStart}
+                onPortChange={setProxyPort}
+                onAutoStartChange={setAutoStart}
+                onStartProxy={() => void startProxy()}
+                onStopProxy={() => void stopProxy()}
+                onSaveSettings={() => void saveRuntimeSettings()}
               />
-              <ConfigForm editing={editing} onUpdate={setEditing} section="basic" />
-              <ConfigForm editing={editing} onUpdate={setEditing} section="models" />
-            </>
-          )}
+            )}
 
-          {tab === "runtime" && (
-            <RuntimeSettings
-              status={status}
-              proxyPort={proxyPort}
-              autoStart={autoStart}
-              onPortChange={setProxyPort}
-              onAutoStartChange={setAutoStart}
-              onStartProxy={() => void startProxy()}
-              onStopProxy={() => void stopProxy()}
-              onSaveSettings={() => void saveRuntimeSettings()}
-            />
-          )}
-
-          {tab === "logs" && (
-            <DebugLogs
-              logs={logs}
-              onRefresh={() => void refreshLogs()}
-              onClear={() => void clearLogs()}
-            />
-          )}
-        </main>
+            {tab === "logs" && (
+              <DebugLogs
+                logs={logs}
+                onRefresh={() => void refreshLogs()}
+                onClear={() => void clearLogs()}
+              />
+            )}
+          </main>
+        </div>
       </div>
 
       {/* Toast stack */}
