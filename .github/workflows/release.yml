@@ -21,8 +21,8 @@ jobs:
       # 某个平台失败时，不中断其它平台构建
       fail-fast: false
       matrix:
-        # 构建平台矩阵：macOS / Linux / Windows
-        platform: [macos-latest, ubuntu-22.04, windows-latest]
+        # 构建平台矩阵：macOS  / Windows
+        platform: [macos-latest, windows-latest]
 
     runs-on: ${{ matrix.platform }}
     env:
