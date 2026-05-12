@@ -1,16 +1,19 @@
 import type { Profile } from "../types";
+import type { Translate } from "../i18n";
 import { PrefRow, Section } from "./ui";
 
 interface ConfigFormProps {
   editing: Profile;
   onUpdate: (profile: Profile) => void;
   section?: "basic" | "models";
+  t: Translate;
 }
 
 export default function ConfigForm({
   editing,
   onUpdate,
   section = "basic",
+  t,
 }: ConfigFormProps) {
   function updateClaudeModel(index: number, value: string) {
     onUpdate({
@@ -53,17 +56,17 @@ export default function ConfigForm({
   if (section === "models") {
     return (
       <Section
-        title="模型映射"
+        title={t("config.models")}
         actions={
           <button className="mac-btn" onClick={addModel} type="button">
-            + 新增
+            {t("config.modelsAdd")}
           </button>
         }
       >
         <div className="text-[11.5px] text-neutral-500 mb-2">
-          为每个 Claude 模型设置上游模型 ID。代理转发时将按映射替换 model 字段。
+          {t("config.modelsHelp")}
         </div>
-        <PrefRow label="Claude -> Upstream" align="start">
+        <PrefRow label={t("config.modelsLabel")} align="start">
           <div className="space-y-2">
             {editing.model_mappings.map((mapping, index) => (
               <div key={index} className="flex items-center gap-2">
@@ -78,13 +81,13 @@ export default function ConfigForm({
                   className="mac-input max-w-[260px] font-mono"
                   value={mapping.upstream_id}
                   onChange={(e) => updateUpstreamModel(index, e.target.value)}
-                  placeholder="上游模型 ID"
+                  placeholder={t("config.upstreamPlaceholder")}
                 />
                 <button
                   type="button"
                   className="mac-btn mac-btn-danger px-2"
                   onClick={() => removeModel(index)}
-                  aria-label="删除"
+                  aria-label={t("config.modelDeleteAria")}
                 >
                   ✕
                 </button>
@@ -97,16 +100,16 @@ export default function ConfigForm({
   }
 
   return (
-    <Section title="基本信息">
-      <PrefRow label="配置名称">
+    <Section title={t("config.basic")}>
+      <PrefRow label={t("config.name")}>
         <input
           className="mac-input max-w-[360px]"
           value={editing.name}
           onChange={(e) => onUpdate({ ...editing, name: e.target.value })}
-          placeholder="例如：OpenAI Production"
+          placeholder={t("config.namePlaceholder")}
         />
       </PrefRow>
-      <PrefRow label="Provider Base URL">
+      <PrefRow label={t("config.providerBaseUrl")}>
         <input
           className="mac-input max-w-[420px] font-mono"
           value={editing.provider_base_url}
@@ -116,7 +119,7 @@ export default function ConfigForm({
           placeholder="https://api.example.com"
         />
       </PrefRow>
-      <PrefRow label="API Key">
+      <PrefRow label={t("config.apiKey")}>
         <input
           type="password"
           className="mac-input max-w-[420px] font-mono"
@@ -125,7 +128,7 @@ export default function ConfigForm({
           placeholder="sk-..."
         />
       </PrefRow>
-      <PrefRow label="Gateway Token" hint="留空将在保存时自动生成。">
+      <PrefRow label={t("config.gatewayToken")} hint={t("config.gatewayTokenHint")}>
         <input
           className="mac-input max-w-[420px] font-mono"
           value={editing.gateway_token}

@@ -124,7 +124,7 @@ export function Slider({
 export function ShortcutInput({
   modifiers = ["⌥ Option"],
   keyName,
-  placeholder = "未设置",
+  placeholder = "Not set",
 }: {
   modifiers?: string[];
   keyName?: string;

@@ -177,6 +177,7 @@ fn main() {
             commands::delete_profile,
             commands::set_active_profile,
             commands::update_runtime_settings,
+            commands::update_language,
             commands::get_runtime_status,
             commands::get_logs,
             commands::clear_logs,

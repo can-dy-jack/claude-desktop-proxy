@@ -9,6 +9,12 @@ import {
   ProfileSelector,
   RuntimeSettings,
 } from "./components";
+import {
+  createTranslator,
+  detectSystemLocale,
+  normalizeLocale,
+  type Locale,
+} from "./i18n";
 import type { AppConfig, LogEntry, Profile, RuntimeStatus } from "./types";
 
 type TabKey = "profile" | "runtime" | "logs";
@@ -32,10 +38,9 @@ const emptyProfile = (): Profile => ({
   ],
 });
 
-const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [
+const TAB_META: { key: TabKey; icon: JSX.Element }[] = [
   {
     key: "profile",
-    label: "配置",
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z" />
@@ -48,7 +53,6 @@ const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [
   },
   {
     key: "runtime",
-    label: "运行",
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="9" />
@@ -58,7 +62,6 @@ const TABS: { key: TabKey; label: string; icon: JSX.Element }[] = [
   },
   {
     key: "logs",
-    label: "日志",
     icon: (
       <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" />
@@ -79,7 +82,9 @@ export default function App() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [proxyPort, setProxyPort] = useState<number>(15800);
   const [autoStart, setAutoStart] = useState<boolean>(true);
+  const [language, setLanguage] = useState<Locale>("en-US");
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const t = useMemo(() => createTranslator(language), [language]);
 
   const profiles = config?.profiles ?? [];
   const selected = useMemo(
@@ -101,9 +106,20 @@ export default function App() {
       invoke<RuntimeStatus>("get_runtime_status"),
       invoke<LogEntry[]>("get_logs", { limit: 200 }),
     ]);
+
+    const isFirstRunLanguage = !cfg.language || !cfg.language.trim();
+    const currentLanguage = isFirstRunLanguage
+      ? detectSystemLocale()
+      : normalizeLocale(cfg.language);
+
+    if (isFirstRunLanguage) {
+      await invoke("update_language", { language: currentLanguage });
+    }
+
     setConfig(cfg);
     setStatus(stat);
     setLogs(logItems);
+    setLanguage(currentLanguage);
     setProxyPort(cfg.proxy_port);
     setAutoStart(cfg.auto_start);
     setSelectedId((current) => current ?? cfg.active_profile_id ?? cfg.profiles[0]?.id ?? null);
@@ -120,7 +136,9 @@ export default function App() {
   }
 
   useEffect(() => {
-    void load().catch((error) => notify("error", `加载配置失败: ${String(error)}`));
+    void load().catch((error) =>
+      notify("error", `Failed to load config: ${String(error)}`)
+    );
   }, [load, notify]);
 
   useEffect(() => {
@@ -141,9 +159,9 @@ export default function App() {
       const saved = await invoke<Profile>("upsert_profile", { profile: editing });
       setSelectedId(saved.id);
       await load();
-      notify("success", "配置已保存");
+      notify("success", t("toast.profileSaved"));
     } catch (error) {
-      notify("error", `保存失败: ${String(error)}`);
+      notify("error", t("toast.profileSaveFailed", { error: String(error) }));
     }
   }
 
@@ -152,9 +170,9 @@ export default function App() {
     try {
       await invoke("set_active_profile", { profileId: editing.id });
       await load();
-      notify("success", "已切换当前生效配置");
+      notify("success", t("toast.profileActivated"));
     } catch (error) {
-      notify("error", `生效失败: ${String(error)}`);
+      notify("error", t("toast.profileActivateFailed", { error: String(error) }));
       await refreshLogs();
     }
   }
@@ -166,9 +184,9 @@ export default function App() {
       setEditing(emptyProfile());
       setSelectedId(null);
       await load();
-      notify("success", "配置已删除");
+      notify("success", t("toast.profileDeleted"));
     } catch (error) {
-      notify("error", `删除失败: ${String(error)}`);
+      notify("error", t("toast.profileDeleteFailed", { error: String(error) }));
     }
   }
 
@@ -176,9 +194,9 @@ export default function App() {
     try {
       await invoke("start_proxy");
       await load();
-      notify("success", "代理已启动");
+      notify("success", t("toast.proxyStarted"));
     } catch (error) {
-      notify("error", `启动失败: ${String(error)}`);
+      notify("error", t("toast.proxyStartFailed", { error: String(error) }));
     }
   }
 
@@ -186,19 +204,20 @@ export default function App() {
     try {
       await invoke("stop_proxy");
       await load();
-      notify("success", "代理已停止");
+      notify("success", t("toast.proxyStopped"));
     } catch (error) {
-      notify("error", `停止失败: ${String(error)}`);
+      notify("error", t("toast.proxyStopFailed", { error: String(error) }));
     }
   }
 
   async function saveRuntimeSettings() {
     try {
+      await invoke("update_language", { language });
       await invoke("update_runtime_settings", { proxyPort, autoStart });
       await load();
-      notify("success", "运行设置已更新");
+      notify("success", t("toast.runtimeSaved"));
     } catch (error) {
-      notify("error", `保存运行设置失败: ${String(error)}`);
+      notify("error", t("toast.runtimeSaveFailed", { error: String(error) }));
     }
   }
 
@@ -223,13 +242,13 @@ export default function App() {
           <button
             type="button"
             className="titlebar-control close"
-            aria-label="关闭窗口"
+            aria-label={t("window.close")}
             onClick={closeWindow}
           />
           <button
             type="button"
             className="titlebar-control minimize"
-            aria-label="最小化窗口"
+            aria-label={t("window.minimize")}
             onClick={minimizeWindow}
           />
         </div>
@@ -246,15 +265,15 @@ export default function App() {
         <div className="mx-auto w-full max-w-[860px]">
           {/* Icon nav bar */}
           <nav className="px-4 py-2 flex items-center justify-center gap-1 mb-3">
-            {TABS.map((t) => (
+            {TAB_META.map((tabItem) => (
               <button
-                key={t.key}
+                key={tabItem.key}
                 type="button"
-                className={`nav-tab ${tab === t.key ? "active" : ""}`}
-                onClick={() => setTab(t.key)}
+                className={`nav-tab ${tab === tabItem.key ? "active" : ""}`}
+                onClick={() => setTab(tabItem.key)}
               >
-                <span className="nav-icon">{t.icon}</span>
-                <span>{t.label}</span>
+                <span className="nav-icon">{tabItem.icon}</span>
+                <span>{t(`tab.${tabItem.key}`)}</span>
               </button>
             ))}
           </nav>
@@ -276,9 +295,10 @@ export default function App() {
                   onActivate={() => void activateProfile()}
                   onDelete={() => void deleteProfile()}
                   canMutate={!!editing.id}
+                  t={t}
                 />
-                <ConfigForm editing={editing} onUpdate={setEditing} section="basic" />
-                <ConfigForm editing={editing} onUpdate={setEditing} section="models" />
+                <ConfigForm editing={editing} onUpdate={setEditing} section="basic" t={t} />
+                <ConfigForm editing={editing} onUpdate={setEditing} section="models" t={t} />
               </>
             )}
 
@@ -292,6 +312,9 @@ export default function App() {
                 onStartProxy={() => void startProxy()}
                 onStopProxy={() => void stopProxy()}
                 onSaveSettings={() => void saveRuntimeSettings()}
+                language={language}
+                onLanguageChange={setLanguage}
+                t={t}
               />
             )}
 
@@ -300,6 +323,8 @@ export default function App() {
                 logs={logs}
                 onRefresh={() => void refreshLogs()}
                 onClear={() => void clearLogs()}
+                locale={language}
+                t={t}
               />
             )}
           </main>

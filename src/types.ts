@@ -18,6 +18,7 @@ export type AppConfig = {
   active_profile_id?: string;
   proxy_port: number;
   auto_start: boolean;
+  language?: string;
   profiles: Profile[];
 };
 

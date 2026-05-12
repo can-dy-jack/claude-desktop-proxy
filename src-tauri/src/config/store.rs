@@ -29,6 +29,8 @@ pub struct AppConfig {
     pub active_profile_id: Option<String>,
     pub proxy_port: u16,
     pub auto_start: bool,
+    #[serde(default)]
+    pub language: String,
     pub profiles: Vec<Profile>,
 }
 
@@ -38,6 +40,7 @@ impl Default for AppConfig {
             active_profile_id: None,
             proxy_port: 15800,
             auto_start: true,
+            language: String::new(),
             profiles: vec![],
         }
     }
@@ -138,6 +141,17 @@ impl ConfigStore {
         let mut config = self.load()?;
         config.proxy_port = proxy_port;
         config.auto_start = auto_start;
+        self.save(&config)
+    }
+
+    pub fn update_language(&self, language: &str) -> Result<(), String> {
+        let lang = language.trim();
+        if lang.is_empty() {
+            return Err("language must not be empty".to_string());
+        }
+
+        let mut config = self.load()?;
+        config.language = lang.to_string();
         self.save(&config)
     }
 

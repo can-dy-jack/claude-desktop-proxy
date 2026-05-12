@@ -1,4 +1,5 @@
 import type { Profile } from "../types";
+import type { Translate } from "../i18n";
 import { PrefRow, Section, Select } from "./ui";
 
 interface ProfileSelectorProps {
@@ -11,6 +12,7 @@ interface ProfileSelectorProps {
   onDelete: () => void;
   onSave: () => void;
   canMutate: boolean;
+  t: Translate;
 }
 
 export default function ProfileSelector({
@@ -23,6 +25,7 @@ export default function ProfileSelector({
   onDelete,
   onSave,
   canMutate,
+  t,
 }: ProfileSelectorProps) {
   const selectedProfile = profiles.find((p) => p.id === selectedId) ?? null;
   const selectedIsActive =
@@ -30,42 +33,42 @@ export default function ProfileSelector({
 
   const options = profiles.map((p) => ({
     value: p.id,
-    label: p.name || "未命名配置",
+    label: p.name || t("profile.unnamed"),
   }));
 
   return (
-    <Section title="配置组">
-      <PrefRow label="当前配置">
+    <Section title={t("profile.section")}>
+      <PrefRow label={t("profile.current")}>
         <div className="flex items-center gap-2 flex-wrap">
           {profiles.length > 0 ? (
             <Select
               value={selectedId ?? ""}
               options={options}
               onChange={(v) => onSelectProfile(v)}
-              placeholder="选择配置组"
+              placeholder={t("profile.select")}
               width={260}
             />
           ) : (
-            <span className="text-[12.5px] text-neutral-500">暂无配置，请新建。</span>
+            <span className="text-[12.5px] text-neutral-500">{t("profile.empty")}</span>
           )}
           {selectedIsActive && (
-            <span className="active-tag" aria-label="当前配置已生效">
-              生效中
+            <span className="active-tag" aria-label={t("profile.activeAria")}>
+              {t("profile.active")}
             </span>
           )}
           <button className="mac-btn" type="button" onClick={onNewProfile}>
-            + 新建
+            {t("profile.new")}
           </button>
         </div>
       </PrefRow>
-      <PrefRow label="操作">
+      <PrefRow label={t("profile.actions")}>
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
             className="mac-btn mac-btn-primary"
             onClick={onSave}
           >
-            保存
+            {t("profile.save")}
           </button>
           <button
             type="button"
@@ -73,7 +76,7 @@ export default function ProfileSelector({
             onClick={onActivate}
             disabled={!canMutate}
           >
-            设为生效
+            {t("profile.activate")}
           </button>
           <button
             type="button"
@@ -81,7 +84,7 @@ export default function ProfileSelector({
             onClick={onDelete}
             disabled={!canMutate}
           >
-            删除
+            {t("profile.delete")}
           </button>
         </div>
       </PrefRow>

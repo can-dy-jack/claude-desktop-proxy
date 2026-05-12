@@ -84,6 +84,14 @@ pub async fn update_runtime_settings(
 }
 
 #[tauri::command]
+pub fn update_language(
+    state: State<'_, AppState>,
+    language: String,
+) -> Result<(), String> {
+    state.store.update_language(&language)
+}
+
+#[tauri::command]
 pub async fn start_proxy(state: State<'_, AppState>, app: AppHandle) -> Result<(), String> {
     let config = state.store.load()?;
     state.proxy.start(config.proxy_port).await?;

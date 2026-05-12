@@ -1,5 +1,6 @@
 import type { RuntimeStatus } from "../types";
-import { PrefRow, Section, ShortcutInput, Slider, Switch } from "./ui";
+import type { Locale, Translate } from "../i18n";
+import { PrefRow, Section, Select, ShortcutInput, Slider, Switch } from "./ui";
 
 interface RuntimeSettingsProps {
   status: RuntimeStatus | null;
@@ -10,6 +11,9 @@ interface RuntimeSettingsProps {
   onStartProxy: () => void;
   onStopProxy: () => void;
   onSaveSettings: () => void;
+  language: Locale;
+  onLanguageChange: (locale: Locale) => void;
+  t: Translate;
 }
 
 export default function RuntimeSettings({
@@ -21,12 +25,20 @@ export default function RuntimeSettings({
   onStartProxy,
   onStopProxy,
   onSaveSettings,
+  language,
+  onLanguageChange,
+  t,
 }: RuntimeSettingsProps) {
   const running = !!status?.running;
+  const languageOptions: { value: Locale; label: string }[] = [
+    { value: "zh-CN", label: t("runtime.languageOptionZh") },
+    { value: "en-US", label: t("runtime.languageOptionEn") },
+  ];
+
   return (
     <>
-      <Section title="代理状态">
-        <PrefRow label="状态">
+      <Section title={t("runtime.proxyStatus")}>
+        <PrefRow label={t("runtime.status")}>
           <div className="flex items-center gap-3">
             <span
               className={`status-pill ${
@@ -40,14 +52,14 @@ export default function RuntimeSettings({
                   running ? "bg-emerald-500" : "bg-neutral-400"
                 }`}
               />
-              {running ? "运行中" : "已停止"}
+              {running ? t("runtime.running") : t("runtime.stopped")}
             </span>
             <span className="text-[12px] text-neutral-500 tabular-nums">
-              端口 {status?.proxy_port ?? "-"}
+              {t("runtime.port", { port: status?.proxy_port ?? "-" })}
             </span>
           </div>
         </PrefRow>
-        <PrefRow label="操作">
+        <PrefRow label={t("runtime.actions")}>
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -55,7 +67,7 @@ export default function RuntimeSettings({
               onClick={onStartProxy}
               disabled={running}
             >
-              启动
+              {t("runtime.start")}
             </button>
             <button
               type="button"
@@ -63,14 +75,14 @@ export default function RuntimeSettings({
               onClick={onStopProxy}
               disabled={!running}
             >
-              停止
+              {t("runtime.stop")}
             </button>
           </div>
         </PrefRow>
       </Section>
 
-      <Section title="运行参数">
-        <PrefRow label="代理端口" hint="范围 1024 – 65535，建议保留默认值。">
+      <Section title={t("runtime.params")}>
+        <PrefRow label={t("runtime.proxyPort")} hint={t("runtime.proxyPortHint")}>
           <Slider
             value={proxyPort}
             min={1024}
@@ -80,17 +92,29 @@ export default function RuntimeSettings({
             width={260}
           />
         </PrefRow>
-        <PrefRow label="启动行为">
+        <PrefRow label={t("runtime.startBehavior")}>
           <label className="inline-flex items-center gap-2 cursor-pointer">
             <Switch checked={autoStart} onChange={onAutoStartChange} />
-            <span className="text-[13px]">应用启动时自动启动代理</span>
+            <span className="text-[13px]">{t("runtime.autoStart")}</span>
           </label>
         </PrefRow>
+        <PrefRow label={t("runtime.language")}>
+          <Select
+            value={language}
+            options={languageOptions}
+            onChange={onLanguageChange}
+            width={200}
+          />
+        </PrefRow>
         <PrefRow
-          label="全局快捷键"
-          hint="预留：用于唤起本设置窗口（暂未实现绑定）。"
+          label={t("runtime.shortcut")}
+          hint={t("runtime.shortcutHint")}
         >
-          <ShortcutInput modifiers={["⌥ Option", "⇧ Shift"]} keyName="K" />
+          <ShortcutInput
+            modifiers={["⌥ Option", "⇧ Shift"]}
+            keyName="K"
+            placeholder={t("common.notSet")}
+          />
         </PrefRow>
         <PrefRow label="">
           <button
@@ -98,20 +122,20 @@ export default function RuntimeSettings({
             className="mac-btn mac-btn-primary"
             onClick={onSaveSettings}
           >
-            保存运行设置
+            {t("runtime.save")}
           </button>
         </PrefRow>
       </Section>
 
-      <Section title="Claude Desktop 配置提示">
-        <PrefRow label="Gateway Base URL">
+      <Section title={t("runtime.claudeHint")}>
+        <PrefRow label={t("runtime.gatewayBaseUrl")}>
           <code className="font-mono text-[12.5px] text-neutral-700 bg-black/[0.04] px-2 py-0.5 rounded">
             http://127.0.0.1:{proxyPort}
           </code>
         </PrefRow>
-        <PrefRow label="Gateway API Key">
+        <PrefRow label={t("runtime.gatewayApiKey")}>
           <span className="text-[12.5px] text-neutral-600">
-            使用当前生效配置的 <span className="font-mono">Gateway Token</span>
+            {t("runtime.gatewayApiKeyHelp")} <span className="font-mono">Gateway Token</span>
           </span>
         </PrefRow>
       </Section>

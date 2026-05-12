@@ -10,10 +10,11 @@ Claude Desktop 的本地代理客户端（Tauri v2 + React），用于将 Claude
   1. Gateway base URL 配置为本软件的代理地址，一般是 http://127.0.0.1:15800
   2. Gateway API key随便填一个（这个在本软件里统一管理）
   ![](./images/claude-1.png)
-  3. Model list 可以按需填写，名字随便写，但是一定要以 `claude-` 开头，这个模型列表方便在本软件里进行模型映射。
+  3. Model list 仅用于告诉 Claude 可选模型名。建议与本软件里的 Claude 模型映射一致；默认可使用：claude-sonnet-4-6、claude-opus-4-1、claude-haiku-3-5。
   ![](./images/claude-2.png)
   4. 应用到本地，软件重启。
 3. 启动本软件，在这里管理你的模型组。设置真正的接口地址、api Key 以及模型映射之后，点击生效，并开启代理即可代理成功。
+4. 代理转发时会严格按“Claude 模型 -> 上游模型”映射替换请求中的 model；如果请求模型未配置映射，会返回 400。
 ![](./images/app-1.png)
 ![](./images/app-2.png)
 
