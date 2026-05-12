@@ -21,8 +21,13 @@ jobs:
       # 某个平台失败时，不中断其它平台构建
       fail-fast: false
       matrix:
-        # 构建平台矩阵：macOS  / Windows
-        platform: [macos-latest, windows-latest]
+        # 构建平台矩阵：macOS / Windows
+        include:
+          # 无开发者账号时，macOS 仅发布 app 包，尽量降低 dmg 安装时触发“已损毁”的概率
+          - platform: macos-latest
+            tauri_args: --bundles app
+          - platform: windows-latest
+            tauri_args: ""
 
     runs-on: ${{ matrix.platform }}
     env:
@@ -69,7 +74,16 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ env.RELEASE_TOKEN }}
+          # macOS 签名/公证（可选）：未配置时仅会产出未签名包
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
+          # macOS 仅打 app，Windows 维持默认目标
+          args: ${{ matrix.tauri_args }}
           # 使用当前 tag 名称作为 Release 的 tagName（例如 v0.1.0）
           tagName: ${{ github.ref_name }}
           # Release 标题
@@ -87,7 +101,16 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS 签名/公证（可选）：未配置时仅会产出未签名包
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         with:
+          # macOS 仅打 app，Windows 维持默认目标
+          args: ${{ matrix.tauri_args }}
           # 使用当前 tag 名称作为 Release 的 tagName（例如 v0.1.0）
           tagName: ${{ github.ref_name }}
           # Release 标题

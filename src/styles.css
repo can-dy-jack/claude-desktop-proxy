@@ -9,8 +9,23 @@ body,
   background: transparent;
 }
 
+html.platform-windows,
+html.platform-windows body,
+html.platform-windows #root {
+  background: #eef1f6;
+}
+
 .app-shell {
   overflow: hidden;
+}
+
+html.platform-windows .app-shell {
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(246, 249, 255, 0.84) 45%,
+    rgba(237, 242, 251, 0.9) 100%
+  );
 }
 
 .titlebar {

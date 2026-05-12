@@ -72,3 +72,52 @@ git tag v0.1.0
 git push origin v0.1.0
 ```
 
+
+### 打包产物位置
+
+本地打包后可在以下目录找到安装程序：
+
+- macOS: `src-tauri/target/release/bundle/dmg/`
+- Windows: `src-tauri/target/release/bundle/msi/` 或 `src-tauri/target/release/bundle/nsis/`
+- 通用目录: `src-tauri/target/release/bundle/`
+
+GitHub Actions 打包完成后，安装包会上传到对应 tag 的 GitHub Releases 页面。
+
+### 常见安装问题
+
+1. Windows 只看到空白控制台
+
+这是因为应用被当作控制台子系统启动。项目已在 Rust 入口增加：
+
+```rust
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+```
+
+Release 版本将不再弹出空白控制台。
+
+2. macOS 提示“已损毁”
+
+通常是未签名/未公证包被 Gatekeeper 拦截，不是构建产物损坏。
+
+如果没有 Apple 开发者账号，建议优先下载 Release 中的 `.app.tar.gz`（避免使用 dmg），并在首次运行前执行：
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Claude Desktop Proxy.app"
+codesign --force --deep --sign - "/Applications/Claude Desktop Proxy.app"
+```
+
+说明：
+
+- 第一行用于移除下载隔离标记（quarantine）。
+- 第二行是本机 ad-hoc 重新签名（不需要开发者账号），可降低“已损毁/无法验证开发者”提示概率。
+
+要让 macOS 正常安装，请在仓库 Secrets 配置以下变量（工作流已支持）：
+
+- `APPLE_CERTIFICATE`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_SIGNING_IDENTITY`
+- `APPLE_ID`
+- `APPLE_PASSWORD`
+- `APPLE_TEAM_ID`
+
+未配置上述变量时，仍可打包，但 macOS 上可能被系统阻止打开。

@@ -166,6 +166,14 @@ export default function App() {
   }, [load]);
 
   useEffect(() => {
+    const isWindows = navigator.userAgent.toLowerCase().includes("windows");
+    document.documentElement.classList.toggle("platform-windows", isWindows);
+    return () => {
+      document.documentElement.classList.remove("platform-windows");
+    };
+  }, []);
+
+  useEffect(() => {
     if (selected) setEditing(selected);
   }, [selected]);
 

@@ -21,7 +21,7 @@
         "decorations": false,
         "shadow": true,
         "windowEffects": {
-          "effects": ["sidebar"],
+          "effects": ["mica", "acrylic", "sidebar"],
           "state": "active",
           "radius": 18
         }
