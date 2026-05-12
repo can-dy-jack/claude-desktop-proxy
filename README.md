@@ -67,6 +67,7 @@ npm run tauri:build
 ### 触发流水线
 
 ```bash
+# 示例
 git tag v0.1.0
 git push origin v0.1.0
 ```

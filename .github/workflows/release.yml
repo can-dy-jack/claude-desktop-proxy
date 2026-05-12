@@ -25,6 +25,9 @@ jobs:
         platform: [macos-latest, ubuntu-22.04, windows-latest]
 
     runs-on: ${{ matrix.platform }}
+    env:
+      # 可选：手动配置的 PAT，用于在默认 GITHUB_TOKEN 权限不足时创建 Release
+      RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
     steps:
       # 拉取仓库代码
@@ -60,7 +63,27 @@ jobs:
       # 构建并发布：
       # tauri-action 会调用 tauri build，并将产物上传到 GitHub Releases
       # 注意：不需要额外显式执行 npm run tauri:build
-      - name: Build and upload release artifacts
+      # 如果配置了 RELEASE_TOKEN，就优先使用它创建 Release
+      - name: Build and upload release artifacts with RELEASE_TOKEN
+        if: env.RELEASE_TOKEN != ''
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ env.RELEASE_TOKEN }}
+        with:
+          # 使用当前 tag 名称作为 Release 的 tagName（例如 v0.1.0）
+          tagName: ${{ github.ref_name }}
+          # Release 标题
+          releaseName: "Claude Desktop Proxy ${{ github.ref_name }}"
+          # Release 描述
+          releaseBody: "Automated release for ${{ github.ref_name }}"
+          # 是否草稿发布
+          releaseDraft: false
+          # 是否预发布
+          prerelease: false
+
+      # 如果没有配置 RELEASE_TOKEN，则回退到 GitHub Actions 自动注入的默认 GITHUB_TOKEN
+      - name: Build and upload release artifacts with default token
+        if: env.RELEASE_TOKEN == ''
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
