@@ -1,7 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { MouseEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ConfigForm,
@@ -17,6 +15,8 @@ import {
   type Locale,
 } from "./i18n";
 import type { AppConfig, LogEntry, Profile, RuntimeStatus } from "./types";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import type { MouseEvent } from "react";
 
 type TabKey = "profile" | "runtime" | "settings" | "logs";
 
@@ -244,19 +244,6 @@ export default function App() {
     }
   }
 
-  function closeWindow() {
-    void appWindow.close();
-  }
-
-  function minimizeWindow() {
-    void appWindow.minimize();
-  }
-
-  function startWindowDrag(event: MouseEvent<HTMLDivElement>) {
-    if (event.button !== 0) return;
-    void appWindow.startDragging();
-  }
-
   async function saveSettings() {
     try {
       await invoke("update_language", { language });
@@ -266,34 +253,18 @@ export default function App() {
       notify("error", t("toast.settingsSaveFailed", { error: String(error) }));
     }
   }
+  function startWindowDrag(event: MouseEvent<HTMLDivElement>) {
+    if (event.button !== 0) return;
+    void appWindow.startDragging();
+  }
 
   return (
     <div className="app-shell h-full w-full flex flex-col">
-      {/* Custom title bar */}
-      <div className="titlebar">
-        <div className="titlebar-controls" aria-label="window controls">
-          <button
-            type="button"
-            className="titlebar-control close"
-            aria-label={t("window.close")}
-            onClick={closeWindow}
-          />
-          <button
-            type="button"
-            className="titlebar-control minimize"
-            aria-label={t("window.minimize")}
-            onClick={minimizeWindow}
-          />
-        </div>
-
-        <div data-tauri-drag-region className="titlebar-drag" onMouseDown={startWindowDrag}>
-          <span className="titlebar-title">Claude Desktop Proxy</span>
-        </div>
-
-        <div className="titlebar-spacer" aria-hidden="true" />
+      {/* Draggable title bar — macOS traffic lights occupy the top-left */}
+      <div className="titlebar" data-tauri-drag-region onMouseDown={startWindowDrag}>
+        <span className="app-title">Claude Desktop Proxy</span>
       </div>
 
-      {/* Scrollable content */}
       <div className="flex-1 overflow-auto thin-scroll px-4 pb-3">
         <div className="mx-auto w-full max-w-[860px]">
           {/* Icon nav bar */}

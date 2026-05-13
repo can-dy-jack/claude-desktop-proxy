@@ -18,7 +18,9 @@
         "height": 600,
         "resizable": true,
         "transparent": true,
-        "decorations": false,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "shadow": true,
         "windowEffects": {
           "effects": ["mica", "acrylic", "sidebar"],
