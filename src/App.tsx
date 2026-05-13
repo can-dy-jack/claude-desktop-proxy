@@ -95,6 +95,7 @@ export default function App() {
   const [language, setLanguage] = useState<Locale>("en-US");
   const [toasts, setToasts] = useState<Toast[]>([]);
   const t = useMemo(() => createTranslator(language), [language]);
+  const isRunning = !!status?.running;
 
   const profiles = config?.profiles ?? [];
   const selected = useMemo(
@@ -304,7 +305,25 @@ export default function App() {
                 className={`nav-tab ${tab === tabItem.key ? "active" : ""}`}
                 onClick={() => setTab(tabItem.key)}
               >
-                <span className="nav-icon">{tabItem.icon}</span>
+                <span
+                  className={`nav-icon ${
+                    tabItem.key === "runtime"
+                      ? isRunning
+                        ? "runtime-running"
+                        : "runtime-stopped"
+                      : ""
+                  }`}
+                >
+                  {tabItem.icon}
+                  {tabItem.key === "runtime" && (
+                    <span
+                      className={`runtime-nav-badge ${
+                        isRunning ? "running" : "stopped"
+                      }`}
+                      aria-hidden="true"
+                    />
+                  )}
+                </span>
                 <span>{t(`tab.${tabItem.key}`)}</span>
               </button>
             ))}

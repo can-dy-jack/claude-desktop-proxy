@@ -194,10 +194,34 @@ body {
     @apply bg-black/[0.08] text-neutral-900;
   }
   .nav-tab .nav-icon {
-    @apply w-7 h-7 flex items-center justify-center text-neutral-600;
+    @apply w-7 h-7 flex items-center justify-center text-neutral-600 relative;
   }
   .nav-tab.active .nav-icon {
     @apply text-macblue;
+  }
+  .nav-tab .nav-icon.runtime-running {
+    color: #15803d;
+    opacity: 1;
+  }
+  .nav-tab .nav-icon.runtime-stopped {
+    color: #c2410c;
+    opacity: 0.72;
+  }
+  .nav-tab.active .nav-icon.runtime-running,
+  .nav-tab.active .nav-icon.runtime-stopped {
+    color: #0a84ff;
+    opacity: 1;
+  }
+
+  .runtime-nav-badge {
+    @apply absolute -right-0.5 -top-0.5 w-2 h-2 rounded-full border border-white;
+  }
+  .runtime-nav-badge.running {
+    background: #22c55e;
+  }
+  .runtime-nav-badge.stopped {
+    background: #ef4444;
+    opacity: 0.9;
   }
 
   .key-cap {

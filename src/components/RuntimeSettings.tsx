@@ -26,6 +26,9 @@ export default function RuntimeSettings({
   t,
 }: RuntimeSettingsProps) {
   const running = !!status?.running;
+  const statusHint = running
+    ? t("runtime.statusHintRunning")
+    : t("runtime.statusHintStopped");
 
   return (
     <>
@@ -36,15 +39,22 @@ export default function RuntimeSettings({
               className={`status-pill ${
                 running
                   ? "bg-emerald-500/15 text-emerald-700"
-                  : "bg-neutral-500/15 text-neutral-600"
+                  : "bg-amber-500/15 text-amber-700 ring-1 ring-amber-500/30"
               }`}
             >
               <span
                 className={`status-dot ${
-                  running ? "bg-emerald-500" : "bg-neutral-400"
+                  running ? "bg-emerald-500" : "bg-amber-500"
                 }`}
               />
               {running ? t("runtime.running") : t("runtime.stopped")}
+            </span>
+            <span
+              className={`text-[12px] ${
+                running ? "text-emerald-700/80" : "text-red-600"
+              }`}
+            >
+              {statusHint}
             </span>
             <span className="text-[12px] text-neutral-500 tabular-nums">
               {t("runtime.port", { port: status?.proxy_port ?? "-" })}
