@@ -2,6 +2,10 @@
 
 中文说明: [README.md](./README.md) | English version: [README.en.md](./README.en.md)
 
+> **⚠️ 本项目已停止维护**
+>
+> 本仓库不再接受新功能开发与 bug 修复。请改用 [**cc-switch**](https://github.com/farion1231/cc-switch) —— 跨平台桌面工具，支持 Claude Code、Codex 等，功能更完善且持续更新。
+
 Claude Desktop 的本地代理客户端（Tauri v2 + React），用于将 Claude Desktop 请求中转到第三方模型，并支持多配置组切换。
 
 

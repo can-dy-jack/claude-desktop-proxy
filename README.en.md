@@ -2,6 +2,10 @@
 
 English version: [README.en.md](./README.en.md) | 中文说明: [README.md](./README.md)
 
+> **⚠️ This project is no longer maintained**
+>
+> This repository no longer receives new features or bug fixes. Please use [**cc-switch**](https://github.com/farion1231/cc-switch) instead — a cross-platform desktop tool for Claude Code, Codex, and more, with active development and broader capabilities.
+
 A local proxy client for Claude Desktop (Tauri v2 + React). It forwards Claude Desktop requests to third-party models and supports switching between multiple profile groups.
 
 ## Usage
